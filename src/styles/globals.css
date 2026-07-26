@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-apple-black: #0F172A;
+  --color-apple-gray: #64748B;
+  --color-apple-light: #F8FAFC;
+  --color-apple-blue: #0071E3;
+  --color-apple-blue-hover: #0077ED;
+  --color-surface: #FFFFFF;
+  --font-sans: 'Inter', 'Zen Kaku Gothic New', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* === Strict 4-Color Palette & Ultra-Crisp Japanese Typography === */
+/* Color 1: Background #F8FAFC & Surface #FFFFFF */
+/* Color 2: Text #0F172A (Primary) & #64748B (Secondary) */
+/* Color 3: Signature Blue Accent #0071E3 */
+/* Color 4: Attention Amber #B45309 */
+
+html {
+  font-family: 'Inter', 'Zen Kaku Gothic New', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: "palt" 1;
+  color: #0F172A;
+  background-color: #F8FAFC;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.015em;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background-color: #F8FAFC;
+}
+
+/* Pro-Grade Card (Strict 4 Colors, Borderless Depth) */
+.apple-card {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 6px 16px -4px rgba(15, 23, 42, 0.04);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.apple-card:hover {
+  box-shadow: 0 4px 12px 0 rgba(15, 23, 42, 0.05), 0 12px 28px -6px rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+/* Prevent mid-word Japanese line breaks */
+.keep-words {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
