@@ -57,7 +57,7 @@ export function Header() {
   };
 
   return (
-    <div className="sticky top-3.5 z-50 px-4 md:px-8">
+    <div className="hidden lg:block sticky top-3.5 z-50 px-4 md:px-8">
       <header className="max-w-[1160px] mx-auto h-[58px] px-5 rounded-full bg-white/90 backdrop-blur-2xl border border-slate-900/[0.08] shadow-[0_12px_32px_-6px_rgba(15,23,42,0.08)] flex items-center justify-between gap-4 transition-all">
         {/* Left: MiraiWay Standalone Logo Mark (No text) */}
         <div className="flex items-center gap-6">
