@@ -371,37 +371,36 @@ function CandidateStoryCard({
       onClick={onClick}
     >
       {/* Top Header Row with Portrait Face Avatar & Refinement Idea 3 ("94% MATCH" Badge) */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3.5">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+        <div className="flex items-start gap-3 sm:gap-3.5 min-w-0 flex-1">
           <div className="relative shrink-0">
-            <CandidateAvatar src={candidate.photoUrl} name={candidate.name} candidateId={candidate.id} size="lg" className="w-14 h-14 rounded-full" />
-            <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#0071E3] text-white flex items-center justify-center ring-2 ring-white" title="MiraiWay 事前面談・検証済み">
-              <Check size={11} strokeWidth={3} />
+            <CandidateAvatar src={candidate.photoUrl} name={candidate.name} candidateId={candidate.id} size="lg" className="w-13 h-13 sm:w-14 sm:h-14 rounded-full" />
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#0071E3] text-white flex items-center justify-center ring-2 ring-white" title="MiraiWay 事前面談・検証済み">
+              <Check size={10} strokeWidth={3} />
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 text-[12.5px] font-extrabold text-[#0071E3] bg-slate-100 px-2.5 py-0.5 rounded-md">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-[17px] sm:text-[19px] font-extrabold text-[#0F172A] leading-snug tracking-tight truncate">
+              {candidate.name} <span className="text-[13px] font-semibold text-[#64748B]">({candidate.age}歳 · {candidate.desiredLocations.join('・')})</span>
+            </h3>
+            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+              <span className="inline-flex items-center gap-1.5 text-[12px] sm:text-[12.5px] font-extrabold text-[#0071E3] bg-slate-100 px-2.5 py-0.5 rounded-md whitespace-nowrap">
                 <FlagIcon className="w-3.5 h-2.5" />
                 スリランカ · {candidate.field}
               </span>
               {candidate.academiaCompleted && (
-                <span className="inline-flex items-center gap-1 text-[11.5px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-[#0F172A] border border-slate-200">
+                <span className="inline-flex items-center gap-1 text-[11.5px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-[#0F172A] border border-slate-200 whitespace-nowrap">
                   <ShieldCheck size={12} /> アカデミア修了
                 </span>
               )}
             </div>
-            <h3 className="text-[17px] font-extrabold text-[#0F172A] mt-1 leading-snug">
-              {candidate.name} <span className="text-[13px] font-semibold text-[#64748B]">({candidate.age}歳 · {candidate.desiredLocations.join('・')})</span>
-            </h3>
           </div>
         </div>
 
         {/* Right Action Icons & Match Gauge Badge */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Refinement Idea 3: "94% MATCH" Visual Gauge */}
-          <span className="text-[12.5px] font-extrabold px-3 py-1 rounded-full bg-[#0071E3] text-white shadow-2xs">
+        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+          <span className="text-[12px] sm:text-[12.5px] font-extrabold px-3 py-1 rounded-full bg-[#0071E3] text-white shadow-2xs whitespace-nowrap">
             {matchPct}% MATCH
           </span>
 
