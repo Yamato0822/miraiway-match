@@ -62,7 +62,7 @@ export function DemoToolbar() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-        className="fixed top-20 right-6 z-40 hidden md:flex items-center gap-1.5 p-1 rounded-2xl shadow-lg border border-slate-900/[0.08] bg-white/90 backdrop-blur-md"
+        className="fixed bottom-6 right-6 z-40 hidden md:flex items-center gap-1.5 p-1.5 rounded-full shadow-[0_12px_32px_-6px_rgba(15,23,42,0.18)] border border-slate-900/[0.1] bg-white/95 backdrop-blur-xl"
       >
         <button
           onClick={handleTriggerMatchingAnimation}

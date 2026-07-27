@@ -9,6 +9,8 @@ import { FlagIcon, CandidateAvatar } from '../../components/common/CandidateAvat
 import { StoryVideoModal } from '../../components/demo/StoryVideoModal';
 import type { Candidate, DiscoveryTab, SortOption } from '../../types';
 
+const defaultGradientSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'><defs><linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%230F172A'/><stop offset='50%' stop-color='%231E293B'/><stop offset='100%' stop-color='%230071E3'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23g)'/><circle cx='400' cy='200' r='140' fill='%230071E3' opacity='0.25'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23FFFFFF' font-family='sans-serif' font-size='22' font-weight='bold' opacity='0.9'>MiraiWay Match · スリランカ高度人材</text></svg>";
+
 export function CandidateDiscovery() {
   const { state, dispatch } = useDemo();
   const navigate = useNavigate();
@@ -106,7 +108,7 @@ export function CandidateDiscovery() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-      className="max-w-[1140px] mx-auto px-4 md:px-8 py-6 pb-24"
+      className="max-w-[1140px] mx-auto px-4 md:px-8 pt-8 md:pt-12 pb-24"
     >
       {/* Wantedly-style 2-Column Stream Layout */}
       <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -369,9 +371,12 @@ function WantedlyCandidateCard({
       {/* 1. Wantedly Hero Cover Image (16:9 Aspect Ratio) */}
       <div className="relative w-full h-[220px] sm:h-[260px] bg-slate-900 overflow-hidden">
         <img
-          src={candidate.coverUrl || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=800&auto=format&fit=crop&q=80'}
+          src={candidate.coverUrl || defaultGradientSvg}
           alt={candidate.storyHeadline}
           className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = defaultGradientSvg;
+          }}
         />
 
         {/* Video Play Overlay Indicator if video exists */}
