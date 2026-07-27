@@ -1,28 +1,26 @@
 import { useState, useMemo } from 'react';
 import { useDemo } from '../../state/DemoContext';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Search, ArrowRight, Clock, Award, Languages, Calendar, Briefcase, MapPin, Check, ShieldCheck, FileText, ChevronDown, Send } from 'lucide-react';
+import { Search, RotateCcw, ShieldCheck, Megaphone, Bookmark, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { computeMatchCompass } from '../../lib/matchCompass';
 import { Button } from '../../components/common/Button';
 import { FlagIcon, CandidateAvatar } from '../../components/common/CandidateAvatar';
-import type { Candidate, DiscoveryTab, SortOption } from '../../types';
-
-const iconMap: Record<string, React.ElementType> = {
-  Languages, Clock, Award, Calendar, Briefcase, MapPin,
-};
-
 import { StoryVideoModal } from '../../components/demo/StoryVideoModal';
+import type { Candidate, DiscoveryTab, SortOption } from '../../types';
 
 export function CandidateDiscovery() {
   const { state, dispatch } = useDemo();
   const navigate = useNavigate();
+  const [categoryTab, setCategoryTab] = useState<'candidates' | 'casual'>('candidates');
   const [activeTab, setActiveTab] = useState<DiscoveryTab>('recommended');
-  const [sortBy, setSortBy] = useState<SortOption>('match');
+  const [sortBy] = useState<SortOption>('match');
   const [selectedField, setSelectedField] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedJapanese, setSelectedJapanese] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [onlyAcademia, setOnlyAcademia] = useState<boolean>(false);
+  const [onlyVideo, setOnlyVideo] = useState<boolean>(false);
   const [activeStoryCandidate, setActiveStoryCandidate] = useState<Candidate | null>(null);
 
   const defaultJob = state.jobs[0];
@@ -36,8 +34,11 @@ export function CandidateDiscovery() {
     if (activeTab === 'newest') {
       list = list.filter((c) => c.isNew);
     }
-    if (activeTab === 'academia') {
+    if (activeTab === 'academia' || onlyAcademia) {
       list = list.filter((c) => c.academiaCompleted);
+    }
+    if (onlyVideo) {
+      list = list.filter((c) => Boolean(c.videoDuration));
     }
 
     if (selectedField !== 'all') {
@@ -70,11 +71,7 @@ export function CandidateDiscovery() {
     }
 
     return list;
-  }, [state.candidates, state.favorites.candidateIds, activeTab, sortBy, selectedField, selectedLocation, selectedJapanese, searchKeyword, defaultJob]);
-
-  const featuredCandidates = state.candidates
-    .filter((c) => c.published && c.recommendationReasons.length >= 2)
-    .slice(0, 6);
+  }, [state.candidates, state.favorites.candidateIds, activeTab, sortBy, selectedField, selectedLocation, selectedJapanese, searchKeyword, onlyAcademia, onlyVideo, defaultJob]);
 
   const toggleFavorite = (id: string) => {
     const isFav = state.favorites.candidateIds.includes(id);
@@ -94,225 +91,244 @@ export function CandidateDiscovery() {
     }
   };
 
+  const resetFilters = () => {
+    setSelectedField('all');
+    setSelectedLocation('all');
+    setSelectedJapanese('all');
+    setSearchKeyword('');
+    setOnlyAcademia(false);
+    setOnlyVideo(false);
+    setActiveTab('recommended');
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-      className="max-w-[1120px] mx-auto px-6 lg:px-12 py-8 flex flex-col gap-8 pb-20"
+      className="max-w-[1140px] mx-auto px-4 md:px-8 py-6 pb-24"
     >
-      {/* Refinement Idea 1: Hero Story Rings (丸型ストーリーアバターレール) */}
-      <section className="flex flex-col gap-3 pb-6 border-b border-slate-200">
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-bold text-[#0071E3] uppercase tracking-wider block">FEATURED STORIES</span>
-          <span className="text-[13px] font-semibold text-[#64748B]">自己紹介動画つき注目の候補者</span>
-        </div>
+      {/* Wantedly-style 2-Column Stream Layout */}
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-        <div className="flex items-center gap-5 overflow-x-auto hide-scrollbar pt-1 pb-2">
-          {featuredCandidates.map((c) => (
-            <motion.button
-              key={c.id}
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setActiveStoryCandidate(c)}
-              className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group text-center"
+        {/* ===== Left Sidebar (Filters & Category Tabs) ===== */}
+        <aside className="w-full lg:w-[270px] shrink-0 sticky top-[80px] self-start flex flex-col gap-6">
+
+          {/* Top Category Switcher (Wantedly 「シゴト / ミートアップ」 Style) */}
+          <div className="flex items-center gap-6 border-b border-slate-200 pb-2">
+            <button
+              onClick={() => setCategoryTab('candidates')}
+              className={`relative pb-2.5 text-[15px] font-extrabold transition-colors cursor-pointer ${
+                categoryTab === 'candidates' ? 'text-[#111827]' : 'text-[#6B7280] hover:text-[#111827]'
+              }`}
             >
-              {/* Gradient Aura Ring around avatar */}
-              <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-[#0071E3] via-[#B45309] to-[#0071E3] shadow-sm">
-                <div className="p-0.5 bg-white rounded-full">
-                  <CandidateAvatar src={c.photoUrl} name={c.name} candidateId={c.id} size="md" className="w-14 h-14 rounded-full object-cover" />
-                </div>
-                <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-[#0071E3] text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white">
-                  ▶
-                </div>
-              </div>
-              <span className="text-[13px] font-extrabold text-[#0F172A] max-w-[76px] truncate leading-tight group-hover:text-[#0071E3] transition-colors">
-                {c.name}
+              候補者を探す
+              {categoryTab === 'candidates' && (
+                <motion.div
+                  layoutId="wantedlyCategoryTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0071E3]"
+                />
+              )}
+            </button>
+
+            <button
+              onClick={() => setCategoryTab('casual')}
+              className={`relative pb-2.5 text-[15px] font-extrabold transition-colors cursor-pointer ${
+                categoryTab === 'casual' ? 'text-[#111827]' : 'text-[#6B7280] hover:text-[#111827]'
+              }`}
+            >
+              カジュアル面談
+              {categoryTab === 'casual' && (
+                <motion.div
+                  layoutId="wantedlyCategoryTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0071E3]"
+                />
+              )}
+            </button>
+          </div>
+
+          {/* Wantedly Pick Banner ("指名カジュ面、はじめました。" Style) */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 shadow-2xs">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10.5px] font-extrabold text-[#0071E3] bg-white px-2 py-0.5 rounded border border-slate-200 w-fit">
+                MiraiWay Pick
               </span>
-              <span className="text-[11px] font-semibold text-[#64748B]">
-                {c.field}
-              </span>
-            </motion.button>
-          ))}
-        </div>
-      </section>
+              <p className="text-[14px] font-extrabold text-[#111827] leading-snug">
+                指名カジュアル面談、<br />はじめました。
+              </p>
+              <span className="text-[11.5px] text-[#6B7280] font-semibold mt-0.5">通訳が100%同席無料</span>
+            </div>
+            <div className="w-16 h-16 rounded-full bg-[#0071E3]/10 border border-[#0071E3]/20 flex items-center justify-center shrink-0 overflow-hidden">
+              <CandidateAvatar src={state.candidates[0].photoUrl} name="MiraiWay" size="md" className="w-14 h-14 rounded-full object-cover" />
+            </div>
+          </div>
 
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[32px] md:text-[36px] font-extrabold text-[#0F172A] tracking-tight leading-snug">
-            一緒に働く人を探す
-          </h1>
-          <p className="text-[15.5px] text-[#64748B] font-semibold mt-1">
-            意思・日本語学習プロセス・適合条件から選択（カードホバーで詳細展開）
-          </p>
-        </div>
+          {/* Section Title & Reset */}
+          <div className="flex items-center justify-between pt-1">
+            <h2 className="text-[16px] font-extrabold text-[#111827]">候補者を絞り込む</h2>
+            <button
+              onClick={resetFilters}
+              className="text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer p-1"
+              title="条件をリセット"
+            >
+              <RotateCcw size={16} />
+            </button>
+          </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-[14px] font-semibold text-[#64748B]">
-            該当 <strong className="text-[#0F172A] font-extrabold">{filtered.length}</strong> 名
-          </span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="text-[14px] font-bold px-3.5 py-2 rounded-xl bg-white text-[#0F172A] border border-slate-200 cursor-pointer shadow-2xs focus:outline-none"
-            aria-label="並び替え"
-          >
-            <option value="match">条件一致順</option>
-            <option value="newest">新着順</option>
-            <option value="study">日本語学習時間順</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Refinement Idea 2: Floating Top Filter Bar (フローティング・フィルターピル) */}
-      <div className="apple-card p-3.5 flex flex-wrap items-center justify-between gap-3 bg-white/90 backdrop-blur-md">
-        <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-          <div className="relative flex-1">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#64748B]" />
+          {/* Keyword Search Input (Wantedly Flat Gray Input) */}
+          <div className="relative">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
             <input
               type="text"
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="キーワード・職種・名前で検索..."
-              className="w-full pl-9 pr-3 py-2 text-[14px] font-semibold rounded-xl bg-slate-50 text-[#0F172A] border border-slate-200/80 focus:outline-none focus:bg-white focus:border-[#0071E3] transition-colors"
+              placeholder="キーワードで検索"
+              className="w-full pl-9 pr-3 py-2.5 text-[14px] font-semibold rounded-lg bg-[#F3F4F6] text-[#111827] border-0 focus:outline-none focus:ring-2 focus:ring-[#0071E3]/40 transition-all placeholder:text-[#9CA3AF]"
             />
           </div>
-        </div>
 
-        {/* Dropdown Filters */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <select
-            value={selectedField}
-            onChange={(e) => setSelectedField(e.target.value)}
-            className="text-[13.5px] font-bold px-3 py-2 rounded-xl bg-slate-50 text-[#0F172A] border border-slate-200 cursor-pointer focus:outline-none"
-          >
-            <option value="all">分野: すべて</option>
-            <option value="建設">建設</option>
-            <option value="介護">介護</option>
-            <option value="製造">製造</option>
-          </select>
+          {/* Select Dropdowns */}
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="text-[12px] font-bold text-[#6B7280] block mb-1">職種・分野</label>
+              <select
+                value={selectedField}
+                onChange={(e) => setSelectedField(e.target.value)}
+                className="w-full px-3 py-2.5 text-[14px] font-bold rounded-lg bg-white text-[#111827] border border-slate-200/90 cursor-pointer focus:outline-none focus:border-[#0071E3]"
+              >
+                <option value="all">すべての職種</option>
+                <option value="建設">建設</option>
+                <option value="介護">介護</option>
+                <option value="製造">製造</option>
+              </select>
+            </div>
 
-          <select
-            value={selectedLocation}
-            onChange={(e) => setSelectedLocation(e.target.value)}
-            className="text-[13.5px] font-bold px-3 py-2 rounded-xl bg-slate-50 text-[#0F172A] border border-slate-200 cursor-pointer focus:outline-none"
-          >
-            <option value="all">勤務地: すべて</option>
-            <option value="東京">東京</option>
-            <option value="神奈川">神奈川</option>
-            <option value="埼玉">埼玉</option>
-            <option value="千葉">千葉</option>
-            <option value="大阪">大阪</option>
-          </select>
+            <div>
+              <label className="text-[12px] font-bold text-[#6B7280] block mb-1">希望地域</label>
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="w-full px-3 py-2.5 text-[14px] font-bold rounded-lg bg-white text-[#111827] border border-slate-200/90 cursor-pointer focus:outline-none focus:border-[#0071E3]"
+              >
+                <option value="all">すべての地域</option>
+                <option value="東京">東京</option>
+                <option value="神奈川">神奈川</option>
+                <option value="埼玉">埼玉</option>
+                <option value="千葉">千葉</option>
+                <option value="大阪">大阪</option>
+              </select>
+            </div>
 
-          <select
-            value={selectedJapanese}
-            onChange={(e) => setSelectedJapanese(e.target.value)}
-            className="text-[13.5px] font-bold px-3 py-2 rounded-xl bg-slate-50 text-[#0F172A] border border-slate-200 cursor-pointer focus:outline-none"
-          >
-            <option value="all">日本語: すべて</option>
-            <option value="N4">N4</option>
-            <option value="N3">N3</option>
-            <option value="N2">N2</option>
-          </select>
+            <div>
+              <label className="text-[12px] font-bold text-[#6B7280] block mb-1">日本語レベル</label>
+              <select
+                value={selectedJapanese}
+                onChange={(e) => setSelectedJapanese(e.target.value)}
+                className="w-full px-3 py-2.5 text-[14px] font-bold rounded-lg bg-white text-[#111827] border border-slate-200/90 cursor-pointer focus:outline-none focus:border-[#0071E3]"
+              >
+                <option value="all">すべてのレベル</option>
+                <option value="N4">N4</option>
+                <option value="N3">N3</option>
+                <option value="N2">N2</option>
+              </select>
+            </div>
+          </div>
 
-          {(selectedField !== 'all' || selectedLocation !== 'all' || selectedJapanese !== 'all' || searchKeyword) && (
-            <button
-              onClick={() => {
-                setSelectedField('all');
-                setSelectedLocation('all');
-                setSelectedJapanese('all');
-                setSearchKeyword('');
-              }}
-              className="text-[12.5px] font-bold text-[#0071E3] hover:underline px-2 cursor-pointer"
-            >
-              リセット
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex gap-8 overflow-x-auto hide-scrollbar border-b border-slate-200 -mt-2 relative">
-        {[
-          { key: 'recommended', label: 'あなたへのおすすめ' },
-          { key: 'newest', label: '新着' },
-          { key: 'academia', label: 'アカデミア修了' },
-          { key: 'favorites', label: `気になる (${state.favorites.candidateIds.length})` },
-        ].map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key as DiscoveryTab)}
-            className={`relative pb-3.5 text-[15px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
-              activeTab === key ? 'text-[#0071E3]' : 'text-[#64748B] hover:text-[#0F172A]'
-            }`}
-          >
-            {label}
-            {activeTab === key && (
-              <motion.div
-                layoutId="discoveryActiveTab"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0071E3]"
-                transition={{ type: 'spring', damping: 26, stiffness: 350 }}
+          {/* Wantedly Characteristic Checkbox List */}
+          <div className="flex flex-col gap-2.5 pt-2 border-t border-slate-100">
+            <span className="text-[12px] font-bold text-[#6B7280] block">特徴・条件</span>
+            
+            <label className="flex items-center gap-2.5 text-[13.5px] font-bold text-[#111827] cursor-pointer hover:text-[#0071E3] transition-colors">
+              <input
+                type="checkbox"
+                checked={onlyAcademia}
+                onChange={(e) => setOnlyAcademia(e.target.checked)}
+                className="w-4 h-4 rounded text-[#0071E3] focus:ring-0 cursor-pointer"
               />
-            )}
-          </button>
-        ))}
-      </div>
+              <span>アカデミア修了者のみ</span>
+            </label>
 
-      {/* Main Grid: Feed + Refinement Idea 4 (Integrated Pipeline Sidebar) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Candidate Feed (2 columns on lg) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+            <label className="flex items-center gap-2.5 text-[13.5px] font-bold text-[#111827] cursor-pointer hover:text-[#0071E3] transition-colors">
+              <input
+                type="checkbox"
+                checked={onlyVideo}
+                onChange={(e) => setOnlyVideo(e.target.checked)}
+                className="w-4 h-4 rounded text-[#0071E3] focus:ring-0 cursor-pointer"
+              />
+              <span>自己紹介動画あり</span>
+              <span className="text-[10px] font-extrabold text-white bg-[#0071E3] px-1.5 py-0.5 rounded">NEW</span>
+            </label>
+          </div>
+        </aside>
+
+        {/* ===== Right Stream Feed (Wantedly Cover Stream) ===== */}
+        <main className="flex-1 min-w-0 max-w-[820px] flex flex-col gap-6">
+
+          {/* Stream Header (Count on Left, Sort Links on Right) */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
+            <h1 className="text-[17px] font-extrabold text-[#111827]">
+              <strong className="text-[20px]">{filtered.length}</strong> / {state.candidates.length}件の候補者
+            </h1>
+
+            {/* Wantedly Tab Sort Links ("人気 | 新着 | おすすめ") */}
+            <div className="flex items-center gap-4 text-[14px] font-bold">
+              {[
+                { key: 'recommended', label: 'おすすめ' },
+                { key: 'newest', label: '新着' },
+                { key: 'academia', label: 'アカデミア' },
+                { key: 'favorites', label: `気になる (${state.favorites.candidateIds.length})` },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key as DiscoveryTab)}
+                  className={`cursor-pointer transition-colors ${
+                    activeTab === key ? 'text-[#0071E3] font-extrabold underline underline-offset-4' : 'text-[#6B7280] hover:text-[#111827]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Candidate Stream List */}
           {filtered.length === 0 ? (
-            <div className="apple-card p-12 text-center my-4">
-              <h3 className="text-[19px] font-bold text-[#0F172A] mb-2">
+            <div className="p-12 text-center my-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <h3 className="text-[18px] font-bold text-[#111827] mb-2">
                 該当する候補者が見つかりませんでした
               </h3>
-              <p className="text-[15px] text-[#64748B] mb-6 font-medium">
-                検索条件を変更してお試しください。
+              <p className="text-[14px] text-[#6B7280] mb-6 font-medium">
+                条件をリセットしてお試しください。
               </p>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setSelectedField('all');
-                  setSelectedLocation('all');
-                  setSelectedJapanese('all');
-                  setSearchKeyword('');
-                  setActiveTab('recommended');
-                }}
-              >
+              <Button variant="secondary" onClick={resetFilters}>
                 条件をリセット
               </Button>
             </div>
           ) : (
-            <AnimatePresence mode="popLayout">
-              {filtered.map((c, idx) => (
-                <motion.div
-                  key={c.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ delay: idx * 0.05, type: 'spring', damping: 26, stiffness: 350 }}
-                >
-                  <CandidateStoryCard
-                    candidate={c}
-                    matchSummary={defaultJob ? computeMatchCompass(c, defaultJob) : undefined}
-                    isFavorite={state.favorites.candidateIds.includes(c.id)}
-                    onToggleFavorite={() => toggleFavorite(c.id)}
-                    onClick={() => navigate(`/company/candidates/${c.id}`)}
-                    isScoutedOrApplied={state.threads.some((t) => t.candidateId === c.id)}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            <div className="flex flex-col gap-8">
+              <AnimatePresence mode="popLayout">
+                {filtered.map((c, idx) => (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ delay: idx * 0.04, type: 'spring', damping: 26, stiffness: 350 }}
+                  >
+                    <WantedlyCandidateCard
+                      candidate={c}
+                      matchSummary={defaultJob ? computeMatchCompass(c, defaultJob) : undefined}
+                      isFavorite={state.favorites.candidateIds.includes(c.id)}
+                      onToggleFavorite={() => toggleFavorite(c.id)}
+                      onClick={() => navigate(`/company/candidates/${c.id}`)}
+                      onOpenVideo={() => setActiveStoryCandidate(c)}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
           )}
-        </div>
-
-        {/* Refinement Idea 4: Integrated Pipeline Widget */}
-        <div className="hidden lg:block sticky top-[88px]">
-          <ContextPipelineWidget />
-        </div>
+        </main>
       </div>
 
       {/* Story Video Modal */}
@@ -325,235 +341,133 @@ export function CandidateDiscovery() {
   );
 }
 
-/* ===== Refinement Idea 3 & 5: Candidate Story Card with "94% MATCH" Visual Gauge & Linear Grid Layout ===== */
-function CandidateStoryCard({
+/* ===== Wantedly Stream Candidate Card Component ===== */
+function WantedlyCandidateCard({
   candidate,
   matchSummary,
   isFavorite,
   onToggleFavorite,
   onClick,
-  isScoutedOrApplied,
+  onOpenVideo,
 }: {
   candidate: Candidate;
   matchSummary?: ReturnType<typeof computeMatchCompass>;
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onClick: () => void;
-  isScoutedOrApplied: boolean;
+  onOpenVideo: () => void;
 }) {
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Calculate percentage match
   const matchPct = matchSummary
     ? Math.round((matchSummary.matched.length / (matchSummary.matched.length + matchSummary.needsCheck.length || 1)) * 100)
     : 92;
 
   return (
-    <motion.article
-      layout
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      animate={{
-        scale: isHovered ? 1.038 : 1,
-        borderColor: isHovered ? 'rgba(0, 113, 227, 0.5)' : 'rgba(15, 23, 42, 0.06)',
-      }}
-      transition={{
-        type: 'spring',
-        damping: 30,
-        stiffness: 160,
-        mass: 1.1,
-      }}
-      className={`apple-card p-6 md:p-7 cursor-pointer flex flex-col gap-4 relative overflow-hidden transition-shadow duration-500 ${
-        isHovered
-          ? 'shadow-[0_20px_45px_-12px_rgba(0,113,227,0.15),0_12px_24px_-6px_rgba(15,23,42,0.12)] z-30 bg-white ring-1 ring-[#0071E3]/20'
-          : 'z-1'
-      }`}
+    <article
       onClick={onClick}
+      className="wantedly-card p-0 cursor-pointer overflow-hidden flex flex-col gap-4 group transition-all"
     >
-      {/* Top Header Row with Portrait Face Avatar & Refinement Idea 3 ("94% MATCH" Badge) */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
-        <div className="flex items-start gap-3 sm:gap-3.5 min-w-0 flex-1">
-          <div className="relative shrink-0">
-            <CandidateAvatar src={candidate.photoUrl} name={candidate.name} candidateId={candidate.id} size="lg" className="w-13 h-13 sm:w-14 sm:h-14 rounded-full" />
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#0071E3] text-white flex items-center justify-center ring-2 ring-white" title="MiraiWay 事前面談・検証済み">
-              <Check size={10} strokeWidth={3} />
-            </div>
-          </div>
+      {/* 1. Wantedly Hero Cover Image (16:9 Aspect Ratio) */}
+      <div className="relative w-full h-[220px] sm:h-[260px] bg-slate-900 overflow-hidden">
+        <img
+          src={candidate.coverUrl || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=800&auto=format&fit=crop&q=80'}
+          alt={candidate.storyHeadline}
+          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+        />
 
-          <div className="min-w-0 flex-1">
-            <h3 className="text-[17px] sm:text-[19px] font-extrabold text-[#0F172A] leading-snug tracking-tight truncate">
-              {candidate.name} <span className="text-[13px] font-semibold text-[#64748B]">({candidate.age}歳 · {candidate.desiredLocations.join('・')})</span>
-            </h3>
-            <div className="flex items-center gap-1.5 flex-wrap mt-1">
-              <span className="inline-flex items-center gap-1.5 text-[12px] sm:text-[12.5px] font-extrabold text-[#0071E3] bg-slate-100 px-2.5 py-0.5 rounded-md whitespace-nowrap">
-                <FlagIcon className="w-3.5 h-2.5" />
-                スリランカ · {candidate.field}
-              </span>
-              {candidate.academiaCompleted && (
-                <span className="inline-flex items-center gap-1 text-[11.5px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-[#0F172A] border border-slate-200 whitespace-nowrap">
-                  <ShieldCheck size={12} /> アカデミア修了
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Video Play Overlay Indicator if video exists */}
+        {candidate.videoDuration && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenVideo();
+            }}
+            className="absolute bottom-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[12px] font-extrabold hover:bg-[#0071E3] transition-colors cursor-pointer border border-white/20"
+          >
+            <Play size={13} className="fill-white" />
+            <span>自己紹介動画 ({candidate.videoDuration})</span>
+          </button>
+        )}
 
-        {/* Right Action Icons & Match Gauge Badge */}
-        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-          <span className="text-[12px] sm:text-[12.5px] font-extrabold px-3 py-1 rounded-full bg-[#0071E3] text-white shadow-2xs whitespace-nowrap">
+        {/* Match Percentage Pill Badge */}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+          <span className="text-[12px] font-extrabold px-3 py-1 rounded-full bg-[#0071E3] text-white shadow-sm">
             {matchPct}% MATCH
           </span>
-
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-            className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 cursor-pointer transition-colors"
-            aria-label={isFavorite ? '気になるを解除' : '気になる'}
-          >
-            <Heart size={19} fill={isFavorite ? '#0F172A' : 'none'} className={isFavorite ? 'text-[#0F172A]' : 'text-[#64748B]'} />
-          </button>
         </div>
       </div>
 
-      {/* Story Catchphrase */}
-      <p className="text-[18px] md:text-[19px] font-extrabold text-[#0F172A] leading-snug tracking-tight">
-        「{candidate.storyHeadline}」
-      </p>
+      {/* 2. Card Content Body */}
+      <div className="px-6 pt-2 pb-5 flex flex-col gap-3.5">
 
-      {/* Evidence Chips Grid */}
-      <div className="flex flex-wrap gap-2">
-        {candidate.evidenceItems.slice(0, 4).map((ev) => {
-          const Icon = iconMap[ev.icon] || Clock;
-          return (
-            <div
-              key={ev.label}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-50 text-[#0F172A] text-[13px] font-semibold border border-slate-200/80"
-            >
-              <Icon size={14} className="text-[#0071E3]" />
-              <span className="text-[#64748B]">{ev.label}:</span>
-              <span className="font-bold">{ev.value}</span>
-            </div>
-          );
-        })}
-      </div>
+        {/* Tag Pills Row (Wantedly Green & Gray Tags) */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1 tag-green font-extrabold px-2.5 py-1 rounded-md text-[12.5px] whitespace-nowrap">
+            {candidate.field} · {candidate.subField}
+          </span>
 
-      {/* Expanded Details Drawer */}
-      <AnimatePresence>
-        {isHovered && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{
-              type: 'spring',
-              damping: 32,
-              stiffness: 150,
-              mass: 1.2,
-            }}
-            className="overflow-hidden flex flex-col gap-3.5 pt-4 border-t border-slate-200 bg-slate-50/60 -mx-7 px-7 pb-4 -mb-3 rounded-b-2xl"
-          >
-            {candidate.miraiwayNote && (
-              <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                <div className="flex items-center gap-1.5 mb-1 text-[13px] font-bold text-[#0071E3]">
-                  <FileText size={15} />
-                  <span>MiraiWay 担当者面談所感</span>
-                </div>
-                <p className="text-[13.5px] text-[#0F172A] leading-relaxed font-medium">
-                  {candidate.miraiwayNote}
-                </p>
+          <span className="tag-gray font-bold px-2.5 py-1 rounded-md text-[12px] whitespace-nowrap">
+            日本語 {candidate.japaneseLevel} ({candidate.studyHours}h)
+          </span>
+
+          {candidate.academiaCompleted && (
+            <span className="inline-flex items-center gap-1 tag-gray font-bold px-2.5 py-1 rounded-md text-[12px] whitespace-nowrap">
+              <ShieldCheck size={13} className="text-[#0071E3]" /> アカデミア修了
+            </span>
+          )}
+
+          <span className="tag-gray font-bold px-2.5 py-1 rounded-md text-[12px] whitespace-nowrap">
+            開始: {candidate.startTiming}
+          </span>
+        </div>
+
+        {/* Impact Catchphrase Title */}
+        <h2 className="text-[20px] sm:text-[22px] font-extrabold text-[#111827] leading-snug tracking-tight group-hover:text-[#0071E3] transition-colors">
+          「{candidate.storyHeadline}」
+        </h2>
+
+        {/* Short Intro Excerpt */}
+        <p className="text-[14.5px] text-[#4B5563] leading-relaxed line-clamp-2 font-medium">
+          {candidate.shortStory}
+        </p>
+
+        {/* Entry / Scout Stats Subtext */}
+        <p className="text-[13px] text-[#6B7280] font-bold">
+          {candidate.studyHours / 10 + 12}人がスカウト検討・注目中
+        </p>
+
+        {/* Footer Meta Row */}
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <CandidateAvatar src={candidate.photoUrl} name={candidate.name} candidateId={candidate.id} size="sm" className="w-9 h-9 rounded-full object-cover" />
+            <div>
+              <div className="flex items-center gap-1.5 text-[14px] font-extrabold text-[#111827]">
+                <span>{candidate.name}</span>
+                <FlagIcon className="w-3.5 h-2.5" />
               </div>
-            )}
-
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[12.5px] font-bold text-[#0071E3] flex items-center gap-1">
-                <ChevronDown size={14} className="rotate-180" /> 詳細を展開中
-              </span>
-
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick();
-                }}
-              >
-                <Send size={14} />
-                詳細プロフィール・スカウト送信
-              </Button>
+              <span className="text-[12px] text-[#6B7280] font-semibold">{candidate.age}歳 · 希望: {candidate.desiredLocations.join('・')}</span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Card Footer */}
-      {!isHovered && (
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-          <div>
-            {isScoutedOrApplied && (
-              <span className="text-[12px] font-bold text-[#0071E3] bg-slate-100 px-2.5 py-0.5 rounded-md">
-                スカウト送信済み
-              </span>
-            )}
           </div>
 
-          <div className="flex items-center gap-1 text-[14px] font-bold text-[#0071E3]">
-            詳細を見る <ArrowRight size={15} />
+          {/* Action Buttons (Share Megaphone / Favorite Bookmark) */}
+          <div className="flex items-center gap-3 text-[#6B7280]">
+            <div className="flex items-center gap-1 text-[13px] font-bold">
+              <Megaphone size={16} />
+              <span>0</span>
+            </div>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite();
+              }}
+              className="flex items-center gap-1 text-[13px] font-bold hover:text-[#111827] transition-colors cursor-pointer"
+            >
+              <Bookmark size={16} fill={isFavorite ? '#111827' : 'none'} className={isFavorite ? 'text-[#111827]' : 'text-[#6B7280]'} />
+              <span>{isFavorite ? 1 : 0}</span>
+            </button>
           </div>
         </div>
-      )}
-    </motion.article>
-  );
-}
-
-/* ===== Refinement Idea 4: Integrated Pipeline Widget (右側 採用パイプライン小窓) ===== */
-function ContextPipelineWidget() {
-  const { state } = useDemo();
-  const navigate = useNavigate();
-
-  const favoriteCount = state.favorites.candidateIds.length;
-  const waitingReply = state.threads.filter((t) => t.nextAction.assignee === 'company' && t.status === 'waiting_reply').length;
-  const scheduling = state.threads.filter((t) => t.status === 'interview_scheduling').length;
-  const offerCount = state.threads.filter((t) => t.status === 'offer' || t.status === 'onboarding').length;
-  const priorityThread = state.threads.find((t) => t.nextAction.assignee === 'company');
-
-  return (
-    <div className="apple-card p-6 flex flex-col gap-5">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 className="text-[16px] font-extrabold text-[#0F172A]">採用パイプライン</h3>
-        <span className="text-[12px] font-bold text-[#0071E3] bg-slate-100 px-2 py-0.5 rounded">REALTIME</span>
       </div>
-
-      {/* Urgent Action Callout */}
-      {priorityThread && (
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col gap-2">
-          <span className="text-[12px] font-extrabold text-[#B45309] block">要対応アクション</span>
-          <p className="text-[13.5px] font-bold text-[#0F172A] leading-snug">
-            {priorityThread.nextAction.description}
-          </p>
-          <Button
-            variant="primary"
-            size="sm"
-            className="w-full text-[12.5px] mt-1"
-            onClick={() => navigate(priorityThread.nextAction.ctaRoute)}
-          >
-            {priorityThread.nextAction.ctaLabel}
-          </Button>
-        </div>
-      )}
-
-      {/* Pipeline Status Breakdown */}
-      <div className="flex flex-col gap-2.5 text-[13.5px] pt-1">
-        {[
-          { label: '気になる保存', count: favoriteCount, color: 'text-[#0071E3]' },
-          { label: '返信待ち', count: waitingReply, color: 'text-[#B45309]' },
-          { label: '面接調整中', count: scheduling, color: 'text-[#0F172A]' },
-          { label: '内定手続中', count: offerCount, color: 'text-[#0071E3]' },
-        ].map(({ label, count, color }) => (
-          <div key={label} className="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
-            <span className="text-[#64748B] font-semibold">{label}</span>
-            <span className={`font-extrabold ${color}`}>{count}名</span>
-          </div>
-        ))}
-      </div>
-    </div>
+    </article>
   );
 }
